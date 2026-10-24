@@ -1,7 +1,8 @@
 from fastapi import FastAPI
+from .database import create_db_and_tables
 
 app = FastAPI()
 
-@app.get('/')
-async def root():
-    print('hello this is taskapi')
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
