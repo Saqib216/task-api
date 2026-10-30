@@ -41,3 +41,11 @@ def update_task(task_id: UUID, task:TaskUpdate, session: SessionDep):
     session.commit()
     session.refresh(task_db)
     return task_db
+
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: UUID, session: SessionDep):
+    task = session.get(Task, task_id)
+    if not task: 
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+    session.delete(task)
+    session.commit()
