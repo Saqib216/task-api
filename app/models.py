@@ -1,3 +1,4 @@
+from pydantic import EmailStr
 from enum import Enum
 from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field
@@ -40,3 +41,28 @@ class TaskUpdate(SQLModel):
     category: str | None = None
     task_date: datetime | None = None
     status: TaskStatus | None = None
+
+
+class UserBase(SQLModel):
+    name: str = Field(index=True)
+    email: EmailStr = Field(unique=True, index=True)
+
+
+class User(UserBase, table=True):
+    user_id: UUID = Field(default_factory=uuid4, primary_key=True)
+    hashed_password: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserPublic(UserBase):
+    user_id: UUID
+    created_at: datetime
+
+
+class UserCreate(UserBase):
+    password: str
+
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str
