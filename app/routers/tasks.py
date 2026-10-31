@@ -3,7 +3,15 @@ from sqlmodel import select
 from typing import Annotated
 from app.models import Task, TaskCreate, TaskPublic, TaskUpdate
 from app.database import SessionDep
-from fastapi import APIRouter, status, Query, HTTPException
+from fastapi import APIRouter, status, Query, HTTPException, Depends
+
+def get_task_or_404(session: SessionDep, task_id: UUID)->Task:
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+TaskDep = Annotated[Task, Depends(get_task_or_404)]
 
 router = APIRouter(
     prefix="/tasks",
@@ -29,36 +37,21 @@ def get_tasks(
 
 
 @router.get("/{task_id}", response_model=TaskPublic)
-def get_task(task_id: UUID, session: SessionDep):
-    task = session.get(Task, task_id)
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
+def get_task(task: TaskDep):
     return task
 
 
 @router.patch("/{task_id}", response_model=TaskPublic)
-def update_task(task_id: UUID, task: TaskUpdate, session: SessionDep):
-    task_db = session.get(Task, task_id)
-    if not task_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
-    task_data = task.model_dump(exclude_unset=True)
-    task_db.sqlmodel_update(task_data)
-    session.add(task_db)
+def update_task(task: TaskDep, task_update: TaskUpdate, session: SessionDep):
+    update_data = task_update.model_dump(exclude_unset=True)
+    task.sqlmodel_update(update_data)
+    session.add(task)
     session.commit()
-    session.refresh(task_db)
-    return task_db
+    session.refresh(task)
+    return task
 
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_task(task_id: UUID, session: SessionDep):
-    task = session.get(Task, task_id)
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
+def delete_task(task: TaskDep, session: SessionDep):
     session.delete(task)
     session.commit()
