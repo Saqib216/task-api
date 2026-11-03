@@ -9,10 +9,12 @@ load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM', 'HS256')
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES ', '30'))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', '30'))
 
 # 2. Password Hashing Tool (Argon2)
 password_hash = PasswordHash.recommended()
+
+DUMMY_HASH = password_hash.hash("dummypassword")
 
 def hash_password(password: str) -> str:
     return password_hash.hash(password)
