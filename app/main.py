@@ -1,4 +1,4 @@
-from app.routers import tasks
+from app.routers import tasks, auth
 from fastapi import FastAPI
 from .database import create_db_and_tables
 
@@ -11,3 +11,5 @@ def on_startup():
 app.include_router(
     tasks.router
 )
+
+app.include_router(auth.router)
