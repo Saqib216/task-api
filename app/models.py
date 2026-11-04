@@ -33,11 +33,14 @@ class TaskPublic(TaskBase):
     task_id: UUID
     status: TaskStatus
     created_at: datetime
+    user_id: UUID
 
 
 class TaskCreate(TaskBase):
     pass
 
+class TaskAdminCreate(TaskCreate):
+    user_id: UUID
 
 class TaskUpdate(SQLModel):
     title: str | None = None

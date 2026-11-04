@@ -1,21 +1,8 @@
-from uuid import UUID
 from sqlmodel import select
 from typing import Annotated
 from app.models import Task, TaskCreate, TaskPublic, TaskUpdate
-from app.dependencies import SessionDep, CurrentUser
-from fastapi import APIRouter, status, Query, HTTPException, Depends
-
-
-def get_task_or_404(
-    session: SessionDep, task_id: UUID, current_user: CurrentUser
-) -> Task:
-    task = session.get(Task, task_id)
-    if not task or task.user_id != current_user.user_id:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return task
-
-
-TaskDep = Annotated[Task, Depends(get_task_or_404)]
+from app.dependencies import SessionDep, CurrentUser, TaskDep
+from fastapi import APIRouter, status, Query
 
 router = APIRouter(
     prefix="/tasks",

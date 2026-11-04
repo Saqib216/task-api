@@ -1,6 +1,4 @@
-from app.routers import admin
-from app.routers import users
-from app.routers import tasks, auth
+from app.routers import tasks, auth, users, admin
 from fastapi import FastAPI
 from .database import create_db_and_tables
 

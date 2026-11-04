@@ -1,3 +1,4 @@
+from app.models import Task
 from app.database import engine
 from app.security import decode_access_token
 from jwt.exceptions import InvalidTokenError
@@ -9,6 +10,7 @@ from fastapi.security.oauth2 import OAuth2PasswordBearer
 from sqlmodel import Session
 
 # session dependency
+
 
 def get_session():
     with Session(engine) as session:
@@ -49,9 +51,36 @@ def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-def require_admin(current_user: CurrentUser)->User:
-    if current_user.role!=Role.ADMIN:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Sorry, you're not authorized for this.")
+# Admin Verification Dependency
+def require_admin(current_user: CurrentUser) -> User:
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required"
+        )
     return current_user
 
+
 AdminDep = Annotated[User, Depends(require_admin)]
+
+
+# plain task loader (just checks ID) - for ADMIN
+def get_task_by_id(task_id: UUID, session: SessionDep) -> Task:
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+        )
+    return task
+
+
+TaskPlainDep = Annotated[Task, Depends(get_task_by_id)]
+
+
+# Ownership task loader (Depends in another Depends) - for EMPLOYEE
+def get_task_with_ownership(task: TaskPlainDep, current_user: CurrentUser) -> Task:
+    if task.user_id != current_user.user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    return task
+
+
+TaskDep = Annotated[Task, Depends(get_task_with_ownership)]
