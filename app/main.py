@@ -1,3 +1,4 @@
+from app.routers import admin
 from app.routers import users
 from app.routers import tasks, auth
 from fastapi import FastAPI
@@ -12,3 +13,4 @@ def on_startup():
 app.include_router(tasks.router)
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(admin.router)

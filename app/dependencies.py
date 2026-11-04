@@ -2,7 +2,7 @@ from app.database import engine
 from app.security import decode_access_token
 from jwt.exceptions import InvalidTokenError
 from uuid import UUID
-from app.models import User
+from app.models import User, Role
 from fastapi import Depends, HTTPException, status
 from typing import Annotated
 from fastapi.security.oauth2 import OAuth2PasswordBearer
@@ -47,3 +47,11 @@ def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def require_admin(current_user: CurrentUser)->User:
+    if current_user.role!=Role.ADMIN:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Sorry, you're not authorized for this.")
+    return current_user
+
+AdminDep = Annotated[User, Depends(require_admin)]
