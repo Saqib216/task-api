@@ -11,6 +11,9 @@ class TaskStatus(str, Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
 
+class Role(str, Enum):
+    ADMIN = "ADMIN"
+    EMPLOYEE = "EMPLOYEE"
 
 class TaskBase(SQLModel):
     title: str = Field(index=True)
@@ -53,11 +56,13 @@ class User(UserBase, table=True):
     user_id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    role: Role = Field(default=Role.EMPLOYEE)
 
 
 class UserPublic(UserBase):
     user_id: UUID
     created_at: datetime
+    role: Role
 
 
 class UserCreate(UserBase):
