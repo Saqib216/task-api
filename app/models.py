@@ -23,6 +23,7 @@ class Task(TaskBase, table=True):
     task_id: UUID = Field(default_factory=uuid4, primary_key=True)
     status: TaskStatus = Field(default=TaskStatus.NEW)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    user_id: UUID = Field(foreign_key="user.user_id", index=True)
 
 
 class TaskPublic(TaskBase):

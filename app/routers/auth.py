@@ -8,7 +8,7 @@ from app.security import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
-from app.database import SessionDep
+from app.dependencies import SessionDep
 from sqlmodel import select, func
 from fastapi import status, HTTPException, APIRouter, Depends
 from app.models import UserCreate, UserPublic, User, Token

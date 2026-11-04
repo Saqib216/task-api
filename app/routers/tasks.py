@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlmodel import select
 from typing import Annotated
 from app.models import Task, TaskCreate, TaskPublic, TaskUpdate
-from app.database import SessionDep
+from app.dependencies import SessionDep
 from fastapi import APIRouter, status, Query, HTTPException, Depends
 
 def get_task_or_404(session: SessionDep, task_id: UUID)->Task:
