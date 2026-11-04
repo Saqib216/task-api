@@ -2,14 +2,18 @@ from uuid import UUID
 from sqlmodel import select
 from typing import Annotated
 from app.models import Task, TaskCreate, TaskPublic, TaskUpdate
-from app.dependencies import SessionDep
+from app.dependencies import SessionDep, CurrentUser
 from fastapi import APIRouter, status, Query, HTTPException, Depends
 
-def get_task_or_404(session: SessionDep, task_id: UUID)->Task:
+
+def get_task_or_404(
+    session: SessionDep, task_id: UUID, current_user: CurrentUser
+) -> Task:
     task = session.get(Task, task_id)
-    if not task:
+    if not task or task.user_id != current_user.user_id:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
+
 
 TaskDep = Annotated[Task, Depends(get_task_or_404)]
 
@@ -20,8 +24,8 @@ router = APIRouter(
 
 
 @router.post("", response_model=TaskPublic, status_code=status.HTTP_201_CREATED)
-def create_task(task: TaskCreate, session: SessionDep):
-    db_task = Task.model_validate(task)
+def create_task(task: TaskCreate, session: SessionDep, current_user: CurrentUser):
+    db_task = Task.model_validate(task, update={"user_id": current_user.user_id})
     session.add(db_task)
     session.commit()
     session.refresh(db_task)
@@ -30,9 +34,17 @@ def create_task(task: TaskCreate, session: SessionDep):
 
 @router.get("", response_model=list[TaskPublic])
 def get_tasks(
-    session: SessionDep, offset: int = 0, limit: Annotated[int, Query(le=100)] = 100
+    session: SessionDep,
+    current_user: CurrentUser,
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100,
 ):
-    tasks = session.exec(select(Task).offset(offset).limit(limit)).all()
+    tasks = session.exec(
+        select(Task)
+        .where(Task.user_id == current_user.user_id)
+        .offset(offset)
+        .limit(limit)
+    ).all()
     return tasks
 
 
