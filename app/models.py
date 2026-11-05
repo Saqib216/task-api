@@ -11,9 +11,11 @@ class TaskStatus(str, Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
 
+
 class Role(str, Enum):
     ADMIN = "ADMIN"
     EMPLOYEE = "EMPLOYEE"
+
 
 class TaskBase(SQLModel):
     title: str = Field(index=True)
@@ -39,8 +41,10 @@ class TaskPublic(TaskBase):
 class TaskCreate(TaskBase):
     pass
 
+
 class TaskAdminCreate(TaskCreate):
     user_id: UUID
+
 
 class TaskUpdate(SQLModel):
     title: str | None = None
@@ -48,6 +52,10 @@ class TaskUpdate(SQLModel):
     category: str | None = None
     task_date: datetime | None = None
     status: TaskStatus | None = None
+
+
+class TaskStatusUpdate(SQLModel):
+    status: TaskStatus
 
 
 class UserBase(SQLModel):
