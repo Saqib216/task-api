@@ -1,22 +1,14 @@
 from sqlmodel import select
 from typing import Annotated
-from app.models import Task, TaskCreate, TaskPublic, TaskUpdate
+from app.models import Task, TaskPublic, TaskStatusUpdate
 from app.dependencies import SessionDep, CurrentUser, TaskDep
-from fastapi import APIRouter, status, Query
+from fastapi import APIRouter, status, Query, HTTPException
+from ..task_transitions import ALLOWED_TRANSITIONS
 
 router = APIRouter(
     prefix="/tasks",
     tags=["Tasks"],
 )
-
-
-@router.post("", response_model=TaskPublic, status_code=status.HTTP_201_CREATED)
-def create_task(task: TaskCreate, session: SessionDep, current_user: CurrentUser):
-    db_task = Task.model_validate(task, update={"user_id": current_user.user_id})
-    session.add(db_task)
-    session.commit()
-    session.refresh(db_task)
-    return db_task
 
 
 @router.get("", response_model=list[TaskPublic])
@@ -40,17 +32,18 @@ def get_task(task: TaskDep):
     return task
 
 
-@router.patch("/{task_id}", response_model=TaskPublic)
-def update_task(task: TaskDep, task_update: TaskUpdate, session: SessionDep):
-    update_data = task_update.model_dump(exclude_unset=True)
-    task.sqlmodel_update(update_data)
+@router.patch("/{task_id}/status", response_model=TaskPublic)
+def task_status_update(
+    task: TaskDep, new_status: TaskStatusUpdate, session: SessionDep
+):
+    if new_status.status not in ALLOWED_TRANSITIONS.get(task.status, []):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=f"Cannot move task from {task.status.value} to {new_status.status.value}",
+        )
+
+    task.status = new_status.status
     session.add(task)
     session.commit()
     session.refresh(task)
     return task
-
-
-@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_task(task: TaskDep, session: SessionDep):
-    session.delete(task)
-    session.commit()
